@@ -2,6 +2,8 @@ import random
 from django.core.management.base import BaseCommand
 from academy.models import Student
 
+#Script para poblar la base de datos
+
 class Command(BaseCommand):
     help = 'Seed the database with mock students'
 

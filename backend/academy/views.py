@@ -19,39 +19,54 @@ class StudentViewSet(viewsets.ModelViewSet):
     def upload_picture(self, request, pk=None):
         student = self.get_object()
 
-        # TODO(actividad): Validar que exista `profile_picture` en request.FILES.
-        # TODO(actividad): Validar tipo/tamano basico del archivo antes de guardar.
-        # TODO(actividad): Usar StudentPictureSerializer para persistir la imagen.
-        # TODO(actividad): Retornar StudentSerializer(student, context={"request": request}).data
-        #                  cuando la subida sea exitosa.
-
         incoming_file = request.FILES.get('profile_picture')
         if not incoming_file:
             return Response(
                 {'detail': 'Debes enviar el archivo profile_picture.'},
                 status=status.HTTP_400_BAD_REQUEST,
             )
+               
+        serializer = StudentPictureSerializer(student, data={'profile_picture': incoming_file})
 
-        return Response(
-            {
-                'detail': (
-                    'TODO_ACTIVIDAD: completa la logica de guardado en '
-                    'academy.views.StudentViewSet.upload_picture'
-                )
-            },
-            status=status.HTTP_501_NOT_IMPLEMENTED,
-        )
+        if serializer.is_valid():
+            serializer.save()        
+   
+            return Response(
+                StudentSerializer(student, context={'request': request}).data,
+                status=status.HTTP_200_OK
+            )
+    
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        
 
 class InstructorViewSet(viewsets.ModelViewSet):
-    pass
+    queryset = Instructor.objects.all()
+    serializer_class = InstructorSerializer
+    search_fields = ['first_name', 'last_name', 'email', 'specialty']
+    ordering_fields = ['created_at', 'first_name', 'last_name']
 
 class VehicleViewSet(viewsets.ModelViewSet):
-    pass
+    queryset = Vehicle.objects.all()
+    serializer_class = VehicleSerializer
+    filterset_fields = ['vehicle_type', 'is_available']
+    search_fields = ['plate', 'brand', 'model']
+    ordering_fields = ['created_at', 'brand', 'model']
 
 class CourseViewSet(viewsets.ModelViewSet):
-    pass
+    queryset = Course.objects.all()
+    serializer_class = CourseSerializer
+    search_fields = ['name', 'description']
+    ordering_fields = ['created_at', 'price', 'duration_hours']
+    filterset_fields = ['level', 'is_active']
+
 class EnrollmentViewSet(viewsets.ModelViewSet):
-    pass
+    queryset = Enrollment.objects.all()
+    serializer_class = EnrollmentSerializer
+    filterset_fields = ['student', 'course', 'status']
+    ordering_fields = ['enrolled_at']
 
 class LessonViewSet(viewsets.ModelViewSet):
-    pass
+    queryset = Lesson.objects.all()
+    serializer_class = LessonSerializer
+    filterset_fields = ['enrollment', 'instructor', 'vehicle', 'status', 'scheduled_at']
+    ordering_fields = ['scheduled_at', 'created_at']
