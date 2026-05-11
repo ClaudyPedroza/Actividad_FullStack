@@ -20,7 +20,7 @@ import {
 } from "@/components/ui/table";
 import { AlertCircle, CheckCircle2 } from "lucide-react";
 
-const courseSchema = z.object({
+const coursesSchema = z.object({
     name: z.string().min(1, "El nombre del curso es requerido"),
     description: z.string().min(1, "La descripcion es requerida"),
     duration: z.string().min(1, "La duracion del curso es requerida"),
@@ -29,17 +29,26 @@ const courseSchema = z.object({
     state: z.string().min(1, "El estado del curso es requerido"),
 });
 
-export default function CoursePage() {
-    const [course, setCourse] = useState([]);
+export default function CoursesPage() {
+    const [courses, setCourses] = useState([]);
     const [isLoading, setisLoading] = useState(true);
     const [error, setError] = useState(" ");
+    const [success, setSuccess] = useState(" ");
 
+    const {
+        register,
+        handleSubmit,
+        reset,
+        formState: { errors, isSubmitting },
+      } = useForm({
+        resolver: zodResolver(coursesSchema),
+      });
 
-    const loadCourse = async () => {
+    const loadCourses = async () => {
         try {
             setisLoading(true);
-            const data = await courseService.getCourse();
-            setCourse(data);
+            const data = await coursesService.getCourse();
+            setCourses(data);
         } catch (err) {
             setError("No se obtuvieron correctamente los cursos desde la api");
         } finally {
@@ -48,8 +57,21 @@ export default function CoursePage() {
     }
 
     useEffect(() => {
-        loadCourse();
+        loadCourses();
     },[]);
+
+    const onSubmit = async (data) => {
+        try {
+              setError("");
+              setSuccess("");
+              await coursesService.createCourse(data);
+              setSuccess("Curso creado exitosamente");
+              reset();
+              loadCourses();
+            } catch (err) {
+              setError(err.response?.data?.detail || "Error al crear el curso.");
+            }
+    };
 
     return (
     <div className="space-y-6">
@@ -57,9 +79,82 @@ export default function CoursePage() {
         <h1 className="text-3xl font-bold tracking-tight">Cursos</h1>
         <p className="text-gray-500 mt-2">Gestiona el registro de cursos.</p>
       </div>
+    <div className="grid gap-6 md:grid-cols-3">
 
-      <div className="grid gap-6 md:grid-cols-3">
-        
+        <div className="md:col-span-1">
+          <Card>
+            <CardHeader>
+              <CardTitle>Registrar nuevo curso</CardTitle>
+              <CardDescription>Añade un nuevo curso al sistema.</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+                <div className="space-y-2">
+                  <Label htmlFor="name">Nombre</Label>
+                  <Input id="name" {...register("name")} />
+                  {errors.name && (
+                    <p className="text-sm text-red-500">{errors.name.message}</p>
+                  )}
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="description">Descripción</Label>
+                  <Input id="description" {...register("description")} />
+                  {errors.description && (
+                    <p className="text-sm text-red-500">{errors.description.message}</p>
+                  )}
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="duration">Duración</Label>
+                  <Input id="duration" type="email" {...register("duration")} />
+                  {errors.duration && (
+                    <p className="text-sm text-red-500">{errors.duration.message}</p>
+                  )}
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="price">Precio</Label>
+                  <Input id="price" {...register("price")} />
+                  {errors.price && (
+                    <p className="text-sm text-red-500">{errors.price.message}</p>
+                  )}
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="level">Nivel</Label>
+                  <Input id="level" {...register("level")} />
+                  {errors.level && (
+                    <p className="text-sm text-red-500">{errors.level.message}</p>
+                  )}
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="state">Estado</Label>
+                  <Input id="state" {...register("state")} />
+                  {errors.state && (
+                    <p className="text-sm text-red-500">{errors.state.message}</p>
+                  )}
+                </div>
+                
+                <Button type="submit" className="w-full" disabled={isSubmitting}>
+                  {isSubmitting ? "Guardando..." : "Guardar Estudiante"}
+                </Button>
+              </form>
+
+              {error && (
+                <Alert variant="destructive" className="mt-4">
+                  <AlertCircle className="h-4 w-4" />
+                  <AlertTitle>Error</AlertTitle>
+                  <AlertDescription>{error}</AlertDescription>
+                </Alert>
+              )}
+
+              {success && (
+                <Alert className="mt-4 border-green-500 text-green-700">
+                  <CheckCircle2 className="h-4 w-4" color="green" />
+                  <AlertTitle>Éxito</AlertTitle>
+                  <AlertDescription>{success}</AlertDescription>
+                </Alert>
+              )}
+            </CardContent>
+          </Card>
+        </div>
 
         <div className="md:col-span-2">
           <Card>
@@ -69,7 +164,7 @@ export default function CoursePage() {
             <CardContent>
               {isLoading ? (
                 <p className="text-center text-gray-500 py-4">Cargando cursos...</p>
-              ) : course.length === 0 ? (
+              ) : courses.length === 0 ? (
                 <p className="text-center text-gray-500 py-4">No hay cursos registrados.</p>
               ) : (
                 <div className="rounded-md border">
@@ -85,16 +180,16 @@ export default function CoursePage() {
                       </TableRow>
                     </TableHeader>
                     <TableBody>
-                      {students.map((student) => (
-                        <TableRow key={student.id}>
+                      {courses.map((course) => (
+                        <TableRow key={course.id}>
                           <TableCell className="font-medium">
-                            {student.first_name} {student.last_name}
+                            {course.name}
                           </TableCell>
-                          <TableCell>{student.email}</TableCell>
-                          <TableCell>{student.phone}</TableCell>
-                          <TableCell>
-                            {new Date(student.created_at).toLocaleDateString()}
-                          </TableCell>
+                          <TableCell>{course.description}</TableCell>
+                          <TableCell>{course.duration}</TableCell>
+                          <TableCell>{course.price}</TableCell>
+                          <TableCell>{course.level}</TableCell>
+                          <TableCell>{course.state}</TableCell>
                         </TableRow>
                       ))}
                     </TableBody>
