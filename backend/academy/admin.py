@@ -1,6 +1,10 @@
 from django.contrib import admin
 from .models import Student, Instructor, Vehicle, Course, Enrollment, Lesson
 
+# list_display: una tupla que define que columnas aparecerán cuando se vea la vista del admin
+# list_filter: buscador con cuadritos, para filtrar
+# search_fields: buscador
+
 @admin.register(Student)
 class StudentAdmin(admin.ModelAdmin):
     list_display = ('first_name', 'last_name', 'email', 'phone', 'created_at')
