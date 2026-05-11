@@ -23,10 +23,12 @@ import { AlertCircle, CheckCircle2 } from "lucide-react";
 const coursesSchema = z.object({
     name: z.string().min(1, "El nombre del curso es requerido"),
     description: z.string().min(1, "La descripcion es requerida"),
-    duration: z.string().min(1, "La duracion del curso es requerida"),
-    price: z.string().min(1, "El precio del curso es requerido"),
-    level: z.string().min(1, "El nivel del curso es requerido"),
-    state: z.string().min(1, "El estado del curso es requerido"),
+    duration_hours: z.coerce.number().int("Debe ser un número entero").positive("La duración debe ser mayor a 0"),
+    price: z.coerce.number().min(0, "El precio no puede ser negativo"),
+    level: z.enum(["basic", "intermediate", "advanced"], {
+    errorMap: () => ({ message: "Selecciona un nivel válido" }),
+  }),
+    is_active: z.coerce.boolean().default(true),
 });
 
 export default function CoursesPage() {
@@ -104,36 +106,42 @@ export default function CoursesPage() {
                   )}
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="duration">Duración</Label>
-                  <Input id="duration" type="email" {...register("duration")} />
-                  {errors.duration && (
-                    <p className="text-sm text-red-500">{errors.duration.message}</p>
+                  <Label htmlFor="duration_hours">Duración</Label>
+                  <Input id="duration_hours" type="number" {...register("duration_hours")} />
+                  {errors.duration_hours && (
+                    <p className="text-sm text-red-500">{errors.duration_hours.message}</p>
                   )}
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="price">Precio</Label>
-                  <Input id="price" {...register("price")} />
+                  <Input id="price" type="number" step="0.01" {...register("price")} />
                   {errors.price && (
                     <p className="text-sm text-red-500">{errors.price.message}</p>
                   )}
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="level">Nivel</Label>
-                  <Input id="level" {...register("level")} />
+                    <select id="level" {...register("level")} className="...">
+                    <option value="basic">Básico</option>
+                    <option value="intermediate">Intermedio</option>
+                    <option value="advanced">Avanzado</option>
+                    </select>
                   {errors.level && (
                     <p className="text-sm text-red-500">{errors.level.message}</p>
                   )}
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="state">Estado</Label>
-                  <Input id="state" {...register("state")} />
-                  {errors.state && (
-                    <p className="text-sm text-red-500">{errors.state.message}</p>
+                  <Label htmlFor="is_active">Estado</Label>
+                  <Input id="is_active" type="checkbox" {...register("is_active")} 
+                  className="h-4 w-4 rounded border-gray-300 text-black focus:ring-black cursor-pointer"/>
+                  <span className="ml-2 text-sm text-gray-600">Activo</span>
+                  {errors.is_active && (
+                    <p className="text-sm text-red-500">{errors.is_active.message}</p>
                   )}
                 </div>
                 
                 <Button type="submit" className="w-full" disabled={isSubmitting}>
-                  {isSubmitting ? "Guardando..." : "Guardar Estudiante"}
+                  {isSubmitting ? "Guardando..." : "Guardar Curso"}
                 </Button>
               </form>
 
@@ -186,10 +194,10 @@ export default function CoursesPage() {
                             {course.name}
                           </TableCell>
                           <TableCell>{course.description}</TableCell>
-                          <TableCell>{course.duration}</TableCell>
+                          <TableCell>{course.duration_hours}</TableCell>
                           <TableCell>{course.price}</TableCell>
                           <TableCell>{course.level}</TableCell>
-                          <TableCell>{course.state}</TableCell>
+                          <TableCell>{course.is_active ? "Activo" : "Inactivo"}</TableCell>
                         </TableRow>
                       ))}
                     </TableBody>
