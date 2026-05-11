@@ -6,8 +6,8 @@ export const coursesService = {
     return response.data.results || response.data;
   },
 
-  createStudent: async (data) => {
-    const response = await api.post('/students/', data);
+  createCourse: async (data) => {
+    const response = await api.post('/courses/', data);
     return response.data;
   },
 };
