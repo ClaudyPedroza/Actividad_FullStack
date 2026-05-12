@@ -36,6 +36,8 @@ export default function CoursesPage() {
     const [isLoading, setisLoading] = useState(true);
     const [error, setError] = useState(" ");
     const [success, setSuccess] = useState(" ");
+    const [selectedId, setSelectedId] = useState (null); 
+    const [isEditing, setIsEditing] = useState(false);
 
     const {
         register,
@@ -66,14 +68,39 @@ export default function CoursesPage() {
         try {
               setError("");
               setSuccess("");
+
+              if(isEditing){
+                await coursesService.updateCourse(selectedId, data);
+                setSuccess("Curso editado exitosamente");
+              } 
+              else {
               await coursesService.createCourse(data);
               setSuccess("Curso creado exitosamente");
+              }
+
               reset();
+              setIsEditing(false);
               loadCourses();
             } catch (err) {
-              setError(err.response?.data?.detail || "Error al crear el curso.");
+              const action = isEditing ? "actualizar" : "crear";
+              setError(err.response?.data?.detail || `Error al ${action} el curso.`);
             }
     };
+
+    
+    const handleEditClick = async (course) => {
+        setIsEditing (true);
+        setSelectedId (course.id);
+
+        reset({
+            name: course.name,
+            description: course.description,
+            duration_hours: course.duration_hours,
+            price: course.price,
+            level: course.level,
+            is_active: course.is_active
+  });
+    }
 
     return (
     <div className="space-y-6">
@@ -141,8 +168,13 @@ export default function CoursesPage() {
                 </div>
                 
                 <Button type="submit" className="w-full" disabled={isSubmitting}>
-                  {isSubmitting ? "Guardando..." : "Guardar Curso"}
+                  {isEditing? "Guardar cambios" : "Guardar Curso"}
                 </Button>
+
+                {isEditing && (
+                  <Button type="button" className="w-full" onClick={() => { setIsEditing(false); reset(""); }}>
+                  Cancelar
+                  </Button>)}
               </form>
 
               {error && (
@@ -198,6 +230,11 @@ export default function CoursesPage() {
                           <TableCell>{course.price}</TableCell>
                           <TableCell>{course.level}</TableCell>
                           <TableCell>{course.is_active ? "Activo" : "Inactivo"}</TableCell>
+                          <TableCell>
+                            <button onClick={() => handleEditClick(course)}className="text-blue-600 hover:text-blue-800 font-medium">
+                                Editar
+                            </button>
+                          </TableCell>
                         </TableRow>
                       ))}
                     </TableBody>
