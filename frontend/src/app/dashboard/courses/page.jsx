@@ -86,7 +86,6 @@ export default function CoursesPage() {
               setError(err.response?.data?.detail || `Error al ${action} el curso.`);
             }
     };
-
     
     const handleEditClick = async (course) => {
         setIsEditing (true);
@@ -101,6 +100,18 @@ export default function CoursesPage() {
             is_active: course.is_active
   });
     }
+
+const onDelete = async (selectedId) => {
+        if (confirm("¿Estás seguro?")) {
+    try {
+      await coursesService.deleteCourse(selectedId);
+      await loadCourses();
+      setSuccess("Curso eliminado");
+    } catch (err) {
+      setError("No se pudo eliminar");
+    }
+  }
+}
 
     return (
     <div className="space-y-6">
@@ -172,7 +183,7 @@ export default function CoursesPage() {
                 </Button>
 
                 {isEditing && (
-                  <Button type="button" className="w-full" onClick={() => { setIsEditing(false); reset(""); }}>
+                  <Button type="button" className="w-full" onClick={() => { setIsEditing(false); reset(); }}>
                   Cancelar
                   </Button>)}
               </form>
@@ -233,6 +244,11 @@ export default function CoursesPage() {
                           <TableCell>
                             <button onClick={() => handleEditClick(course)}className="text-blue-600 hover:text-blue-800 font-medium">
                                 Editar
+                            </button>
+                          </TableCell>
+                          <TableCell>
+                            <button onClick={() => onDelete(course.id)}className="text-red-600 hover:text-red-800 font-medium">
+                                Eliminar
                             </button>
                           </TableCell>
                         </TableRow>
