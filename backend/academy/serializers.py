@@ -6,6 +6,25 @@ class StudentSerializer(serializers.ModelSerializer):
         model = Student
         fields = '__all__'
 
+class StudentPictureSerializer(serializers.ModelSerializer):
+    def validate_profile_picture(self, value):
+        # TODO(actividad): Implementar validaciones de archivo (tamano y tipo MIME).
+        # Ejemplo: permitir image/jpeg e image/png y limitar a 2MB.
+        max_size_bytes = 2 * 1024 * 1024 
+        if value.size > max_size_bytes:
+                raise serializers.ValidationError('La imagen es demasiado grande. El tamaño máximo es de 2MB.')
+            
+
+        allowed_types = ['image/jpeg', 'image/png', 'image/jpg']
+        if value.content_type not in allowed_types:
+            raise serializers.ValidationError('Formato no válido. Solo se aceptan imágenes en formato JPEG o PNG.')
+        
+        return value
+
+    class Meta:
+        model = Student
+        fields = ['profile_picture']
+
 class InstructorSerializer(serializers.ModelSerializer):
     class Meta:
         model = Instructor

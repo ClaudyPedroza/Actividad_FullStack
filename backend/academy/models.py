@@ -5,6 +5,7 @@ class Student(models.Model):
     last_name = models.CharField(max_length=100)
     email = models.EmailField(unique=True)
     phone = models.CharField(max_length=20, blank=True)
+    profile_picture = models.ImageField(upload_to='students/pictures/', blank=True, null=True)
     created_at = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):

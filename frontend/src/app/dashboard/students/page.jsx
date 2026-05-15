@@ -5,6 +5,8 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import { studentsService } from "@/services/students.service";
+import { UploadPictureModal } from "@/components/students/UploadPictureModal";
+import { BACKEND_ORIGIN } from "@/lib/api";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -19,7 +21,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { AlertCircle, CheckCircle2 } from "lucide-react";
+import { AlertCircle, CheckCircle2, ImagePlus } from "lucide-react";
 
 const studentSchema = z.object({
   first_name: z.string().min(1, "El nombre es requerido"),
@@ -33,6 +35,7 @@ export default function StudentsPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
+  const [uploadStudent, setUploadStudent] = useState(null);
 
   const {
     register,
@@ -48,7 +51,7 @@ export default function StudentsPage() {
       setIsLoading(true);
       const data = await studentsService.getStudents();
       setStudents(data);
-    } catch (err) {
+    } catch {
       setError("Error al cargar los estudiantes. Verifica la conexión con el servidor.");
     } finally {
       setIsLoading(false);
@@ -70,6 +73,23 @@ export default function StudentsPage() {
     } catch (err) {
       setError(err.response?.data?.detail || "Error al crear el estudiante. Es posible que el correo ya exista.");
     }
+  };
+
+  const handlePictureSuccess = (updated) => {
+    setStudents((prevStudents) => 
+      prevStudents.map((student) => 
+        student.id === updated.id ? updated : student
+      )
+    );
+    setUploadStudent(null);
+  };
+
+  const getProfilePictureUrl = (profilePicture) => {
+    if (!profilePicture) return null;
+    if (profilePicture.startsWith("http://") || profilePicture.startsWith("https://")) {
+      return profilePicture;
+    }
+    return `${BACKEND_ORIGIN}${profilePicture}`;
   };
 
   return (
@@ -116,7 +136,7 @@ export default function StudentsPage() {
                     <p className="text-sm text-red-500">{errors.phone.message}</p>
                   )}
                 </div>
-                
+
                 <Button type="submit" className="w-full" disabled={isSubmitting}>
                   {isSubmitting ? "Guardando..." : "Guardar Estudiante"}
                 </Button>
@@ -156,15 +176,30 @@ export default function StudentsPage() {
                   <Table>
                     <TableHeader>
                       <TableRow>
+                        <TableHead className="w-12">Foto</TableHead>
                         <TableHead>Nombre</TableHead>
                         <TableHead>Email</TableHead>
                         <TableHead>Teléfono</TableHead>
                         <TableHead>Fecha Registro</TableHead>
+                        <TableHead className="w-12"></TableHead>
                       </TableRow>
                     </TableHeader>
                     <TableBody>
                       {students.map((student) => (
                         <TableRow key={student.id}>
+                          <TableCell>
+                            {student.profile_picture ? (
+                              <img
+                                src={getProfilePictureUrl(student.profile_picture)}
+                                alt={`${student.first_name} ${student.last_name}`}
+                                className="h-8 w-8 rounded-full object-cover"
+                              />
+                            ) : (
+                              <div className="h-8 w-8 rounded-full bg-gray-100 flex items-center justify-center text-gray-400 text-xs font-medium">
+                                {student.first_name[0]}{student.last_name[0]}
+                              </div>
+                            )}
+                          </TableCell>
                           <TableCell className="font-medium">
                             {student.first_name} {student.last_name}
                           </TableCell>
@@ -172,6 +207,15 @@ export default function StudentsPage() {
                           <TableCell>{student.phone}</TableCell>
                           <TableCell>
                             {new Date(student.created_at).toLocaleDateString()}
+                          </TableCell>
+                          <TableCell>
+                            <button
+                              onClick={() => setUploadStudent(student)}
+                              className="p-1 rounded hover:bg-gray-100 text-gray-500 hover:text-gray-800 transition-colors"
+                              title="Subir foto de perfil"
+                            >
+                              <ImagePlus className="h-4 w-4" />
+                            </button>
                           </TableCell>
                         </TableRow>
                       ))}
@@ -183,6 +227,12 @@ export default function StudentsPage() {
           </Card>
         </div>
       </div>
+
+      <UploadPictureModal
+        student={uploadStudent}
+        onClose={() => setUploadStudent(null)}
+        onSuccess={handlePictureSuccess}
+      />
     </div>
   );
 }
